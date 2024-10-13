@@ -1,10 +1,9 @@
 mkdir -p build
 rlmake \
-    --scratch \
+    --rich \
     --dont-keep-rasl \
     --tmp-dir build \
     -o build/Unit \
-    -c "clang++ -I./lib/raylib/include -L./lib/raylib/lib -Wl,-rpath,./lib/raylib/lib -l raylib -lGL -lm -lpthread -ldl -lrt -lX11 -o" \
     tests/Unit.ref || exit 1
 
 ./build/Unit
