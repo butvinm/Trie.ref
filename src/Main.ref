@@ -1,0 +1,96 @@
+*$FROM LibraryEx
+$EXTERN Reduce;
+
+*$FROM src/Trie
+$EXTERN Trie, TrieType-Init;
+
+
+*$FROM lib/Raylib
+$EXTERN
+  WindowShouldClose,
+  CloseWindow,
+  BeginDrawing,
+  EndDrawing,
+  DrawText,
+  ClearBackground,
+  InitWindow,
+  SetTargetFPS,
+  DrawLine,
+  SetConfigFlags;
+
+
+$ENTRY Go {
+  = <TrieType-Init &LexCmp> : (Empty t.Empty) (Build t.Build) (Insert t.Insert) (Show t.Show)
+  /* = <t.Build ('ansible') ('angular') ('apache') ('api') ('aws') ('azure') ('xml') ('xamarin') ('xcode')> : t.Trie */
+  = <t.Build
+    ('bca') ('aa') ('bcc') ('caa') ('ab')
+    ('bcb') ('ccc') ('cab') ('b') ('cac') ('cba') ('cbb') ('cbc') ('aba')
+    ('abb') ('abc') ('aca') ('acb') ('c') ('acc') ('baa') ('bab') ('bac')
+    ('bba') ('bbb') ('bbc')  ('ac') ('aab') ('aac') ('a') ('cca') ('ccb')
+  > : t.Trie
+  = <Prout t.Trie>;
+  /* = <Main t.Trie>; */
+}
+
+
+LexCmp {
+  s.C0 s.C1 = <Compare <Ord s.C0> <Ord s.C1>>;
+}
+
+
+Main {
+  t.Trie
+    = <SetConfigFlags 4> : /* FLAG_WINDOW_RESIZABLE */
+    = <InitWindow 800 600 'Hello, world!'> :
+    = <SetTargetFPS 60> :
+    = <Loop t.Trie>;
+}
+
+
+Loop {
+  t.Trie
+    = <BeginDrawing> :
+    = <ClearBackground (24 24 24 255)> :
+    = <Trie-Draw 50 50 1000 t.Trie> :
+    = <EndDrawing> :
+    = <WindowShouldClose> : {
+      1 = <CloseWindow>;
+      0 = <Loop t.Trie>;
+    };
+}
+
+
+/* Supports only tries with textual characters. */
+WHITE { = (255 255 255 255) };
+FONT_SIZE { = 30 };
+
+Trie-Draw {
+  s.X s.Y s.OffsetXD [Trie Eow] = <Trie-Draw s.X s.Y s.OffsetXD [Trie '@']>;
+
+  s.X s.Y s.OffsetXD [Trie Root e.Children] = <Trie-Draw s.X s.Y s.OffsetXD [Trie '.' e.Children]>;
+
+  s.X s.Y s.OffsetXD [Trie s.Char /* empty */]
+    = <DrawText s.Char s.X s.Y <FONT_SIZE> <WHITE>>;
+
+  s.X s.Y s.OffsetXD [Trie s.Char e.RChildren]
+    = <DrawText s.Char s.X s.Y <FONT_SIZE> <WHITE>> :
+    = <Reduce
+      {
+        s.OffsetX t.Child
+          = <Add s.X s.OffsetX> : s.ChildX
+          = <Add s.Y <Mul <FONT_SIZE> 4>> : s.ChildY
+          = <Trie-Draw s.ChildX s.ChildY <Div s.OffsetXD 5> t.Child> :
+          = <DrawLine
+            <Add s.X 10>
+            <Add s.Y <FONT_SIZE>>
+            <Add s.ChildX 10>
+            s.ChildY
+            <WHITE>
+          > :
+          = <Add s.OffsetX s.OffsetXD>;
+      }
+      0
+      e.RChildren
+    > : s._
+    = /* empty */;
+}

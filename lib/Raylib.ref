@@ -1,0 +1,484 @@
+/*
+The MIT License (MIT)
+
+Copyright © 2024 Mikhail Butvin
+
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the “Software”), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*/
+
+%%
+#include "raylib.h"
+#include <string>
+#include <vector>
+#include <cstdio>
+
+namespace {
+
+refalrts::FnResult string_from_seq(
+  std::vector<char>& string, refalrts::Iter begin, refalrts::Iter end
+) {
+  std::vector<char> result;
+
+  enum { cBufLen = 100 };
+  char buffer[cBufLen + 1] = { 0 };
+
+  unsigned read;
+  while ((read = refalrts::read_chars(buffer, cBufLen, begin, end)) != 0) {
+    // В текущей версии Open Watcom (и форка Open Watcom V2) есть ошибка
+    // в функции vector::insert, которая возникает в случае,
+    // если во время вставки вектор увеличивает свою ёмкость (capacity).
+    // Для обхода этой ошибки предварительно резервируем место.
+    result.reserve(result.size() + read + 1);
+    result.insert(result.end(), buffer, buffer + read);
+  }
+
+  /*
+    Здесь refalrts::empty_seq(begin, end) || (begin->tag != cDataChar).
+  */
+
+  if (refalrts::empty_seq(begin, end)) {
+    result.push_back('\0');
+    string.swap(result);
+    return refalrts::cSuccess;
+  } else {
+    // здесь begin->tag != cDataChar
+    return refalrts::cRecognitionImpossible;
+  }
+}
+
+} // unnamed namespace
+%%
+
+
+%%
+#define PARSE_COLOR(colorB) \
+  refalrts::Iter rP = colorB; \
+  refalrts::Iter gP = rP->next; \
+  refalrts::Iter bP = gP->next; \
+  refalrts::Iter aP = bP->next; \
+  refalrts::Iter colorE = aP; \
+  if ( \
+    refalrts::cDataNumber != rP->tag || rP->number_info < 0 || rP->number_info > 255 || \
+    refalrts::cDataNumber != gP->tag || gP->number_info < 0 || gP->number_info > 255 || \
+    refalrts::cDataNumber != bP->tag || bP->number_info < 0 || bP->number_info > 255 || \
+    refalrts::cDataNumber != aP->tag || aP->number_info < 0 || aP->number_info > 255 \
+  ) { \
+    return refalrts::cRecognitionImpossible; \
+  } \
+  const unsigned char r = static_cast<unsigned char>(rP->number_info); \
+  const unsigned char g = static_cast<unsigned char>(gP->number_info); \
+  const unsigned char b = static_cast<unsigned char>(bP->number_info); \
+  const unsigned char a = static_cast<unsigned char>(aP->number_info);
+%%
+
+
+$ENTRY InitWindow {
+  s.Width s.Height e.Title = <InitWindow-Aux s.Width s.Height e.Title>;
+}
+
+
+InitWindow-Aux {
+%%
+  refalrts::Iter content_b = 0;
+  refalrts::Iter content_e = 0;
+  refalrts::Iter func_ptr = refalrts::call_left(content_b, content_e, arg_begin, arg_end);
+
+  refalrts::Iter pWidth = content_b;
+  refalrts::Iter pHeight = pWidth->next;
+  refalrts::Iter pTitle = pHeight->next;
+
+  // parse width and height
+  if (refalrts::cDataNumber != pWidth->tag || refalrts::cDataNumber != pHeight->tag) {
+    return refalrts::cRecognitionImpossible;
+  }
+  refalrts::RefalNumber width = pWidth->number_info;
+  refalrts::RefalNumber height = pHeight->number_info;
+
+  // parse title
+  std::vector<char> titleV;
+  refalrts::FnResult title_res = string_from_seq(titleV, pTitle, content_e);
+  const char *title = &titleV[0];
+
+  InitWindow(width, height, title);
+
+  refalrts::reset_allocator(vm);
+  refalrts::splice_to_freelist(vm, arg_begin, arg_end);
+  return refalrts::cSuccess;
+%%
+}
+
+
+$ENTRY WindowShouldClose {
+%%
+  refalrts::Iter content_left, content_right;
+  refalrts::Iter func_ptr = refalrts::call_left(content_left, content_right, arg_begin, arg_end);
+
+  const int shouldClose = WindowShouldClose();
+  refalrts::reinit_number(arg_begin, shouldClose);
+
+  splice_to_freelist(vm, func_ptr, arg_end);
+  return refalrts::cSuccess;
+%%
+}
+
+
+$ENTRY CloseWindow {
+%%
+  refalrts::Iter content_b = 0;
+  refalrts::Iter content_e = 0;
+  refalrts::call_left(content_b, content_e, arg_begin, arg_end);
+
+  CloseWindow();
+
+  refalrts::splice_to_freelist(vm, arg_begin, arg_end);
+  return refalrts::cSuccess;
+%%
+}
+
+
+$ENTRY BeginDrawing {
+%%
+  refalrts::Iter content_b = 0;
+  refalrts::Iter content_e = 0;
+  refalrts::call_left(content_b, content_e, arg_begin, arg_end);
+
+  BeginDrawing();
+
+  refalrts::splice_to_freelist(vm, arg_begin, arg_end);
+  return refalrts::cSuccess;
+%%
+}
+
+
+$ENTRY EndDrawing {
+%%
+  refalrts::Iter content_b = 0;
+  refalrts::Iter content_e = 0;
+  refalrts::call_left(content_b, content_e, arg_begin, arg_end);
+
+  EndDrawing();
+
+  refalrts::splice_to_freelist(vm, arg_begin, arg_end);
+  return refalrts::cSuccess;
+%%
+}
+
+
+$ENTRY ClearBackground {
+  (s.R s.G s.B s.A) = <ClearBackground-Aux s.R s.G s.B s.A>;
+}
+
+
+ClearBackground-Aux {
+%%
+  refalrts::Iter content_b = 0;
+  refalrts::Iter content_e = 0;
+  refalrts::call_left(content_b, content_e, arg_begin, arg_end);
+
+  PARSE_COLOR(content_b);
+  ClearBackground(
+    CLITERAL(Color){ r, g, b, a }
+  );
+
+  refalrts::splice_to_freelist(vm, arg_begin, arg_end);
+  return refalrts::cSuccess;
+%%
+}
+
+
+$ENTRY DrawText {
+  e.Text s.PosX s.PosY s.FontSize (s.R s.G s.B s.A) = <DrawText-Aux s.PosX s.PosY s.FontSize s.R s.G s.B s.A e.Text>;
+}
+
+
+DrawText-Aux {
+%%
+  refalrts::Iter content_b = 0;
+  refalrts::Iter content_e = 0;
+  refalrts::Iter func_ptr = refalrts::call_left(content_b, content_e, arg_begin, arg_end);
+
+  // const char *text, int posX, int posY, int fontSize, Color color
+  refalrts::Iter posXP = content_b;
+  refalrts::Iter posYP = posXP->next;
+  if (
+    refalrts::cDataNumber != posXP->tag ||
+    refalrts::cDataNumber != posYP->tag
+  ) {
+    return refalrts::cRecognitionImpossible;
+  }
+  const int posX = posXP->number_info;
+  const int posY = posYP->number_info;
+
+  refalrts::Iter fontSizeP = posYP->next;
+  if (refalrts::cDataNumber != fontSizeP->tag) {
+    return refalrts::cRecognitionImpossible;
+  }
+  const int fontSize = fontSizeP->number_info;
+
+  PARSE_COLOR(fontSizeP->next);
+
+  refalrts::Iter textP = colorE->next;
+  std::vector<char> textV;
+  refalrts::FnResult text_res = string_from_seq(textV, textP, content_e);
+  const char *text = &textV[0];
+
+  DrawText(
+    text,
+    posX,
+    posY,
+    fontSize,
+    CLITERAL(Color){ r, g, b, a }
+  );
+
+  refalrts::reset_allocator(vm);
+  refalrts::splice_to_freelist(vm, arg_begin, arg_end);
+  return refalrts::cSuccess;
+%%
+}
+
+
+$ENTRY DrawRectangle {
+  s.PosX s.PosY s.Width s.Height (s.R s.G s.B s.A) = <DrawRectangle-Aux s.PosX s.PosY s.Width s.Height s.R s.G s.B s.A>;
+}
+
+
+DrawRectangle-Aux {
+%%
+  refalrts::Iter content_b = 0;
+  refalrts::Iter content_e = 0;
+  refalrts::Iter func_ptr = refalrts::call_left(content_b, content_e, arg_begin, arg_end);
+
+  // int posX, int posY, int width, int height, Color color
+  refalrts::Iter posXP = content_b;
+  refalrts::Iter posYP = posXP->next;
+  refalrts::Iter widthP = posYP->next;
+  refalrts::Iter heightP = widthP->next;
+
+  if (
+    refalrts::cDataNumber != posXP->tag ||
+    refalrts::cDataNumber != posYP->tag ||
+    refalrts::cDataNumber != widthP->tag ||
+    refalrts::cDataNumber != heightP->tag
+  ) {
+    return refalrts::cRecognitionImpossible;
+  }
+
+  const int posX = posXP->number_info;
+  const int posY = posYP->number_info;
+  const int width = widthP->number_info;
+  const int height = heightP->number_info;
+
+  PARSE_COLOR(heightP->next);
+
+  DrawRectangle(
+    posX,
+    posY,
+    width,
+    height,
+    CLITERAL(Color){ r, g, b, a }
+  );
+
+  refalrts::reset_allocator(vm);
+  refalrts::splice_to_freelist(vm, arg_begin, arg_end);
+  return refalrts::cSuccess;
+%%
+}
+
+
+$ENTRY DrawLine {
+  s.StartX s.StartY s.EndX s.EndY (s.R s.G s.B s.A) = <DrawLine-Aux s.StartX s.StartY s.EndX s.EndY s.R s.G s.B s.A>;
+}
+
+
+DrawLine-Aux {
+%%
+  refalrts::Iter content_b = 0;
+  refalrts::Iter content_e = 0;
+  refalrts::Iter func_ptr = refalrts::call_left(content_b, content_e, arg_begin, arg_end);
+
+  // int startPosX, int startPosY, int endPosX, int endPosY, Color color
+  refalrts::Iter startPosXP = content_b;
+  refalrts::Iter startPosYP = startPosXP->next;
+  refalrts::Iter endPosXP = startPosYP->next;
+  refalrts::Iter endPosYP = endPosXP->next;
+
+  if (
+    refalrts::cDataNumber != startPosXP->tag ||
+    refalrts::cDataNumber != startPosYP->tag ||
+    refalrts::cDataNumber != endPosXP->tag ||
+    refalrts::cDataNumber != endPosYP->tag
+  ) {
+    return refalrts::cRecognitionImpossible;
+  }
+
+  const int startPosX = startPosXP->number_info;
+  const int startPosY = startPosYP->number_info;
+  const int endPosX = endPosXP->number_info;
+  const int endPosY = endPosYP->number_info;
+
+  PARSE_COLOR(endPosYP->next);
+
+  DrawLine(
+    startPosX,
+    startPosY,
+    endPosX,
+    endPosY,
+    CLITERAL(Color){ r, g, b, a }
+  );
+
+  refalrts::reset_allocator(vm);
+  refalrts::splice_to_freelist(vm, arg_begin, arg_end);
+  return refalrts::cSuccess;
+%%
+}
+
+
+$ENTRY GetFrameTime {
+%%
+  refalrts::Iter content_b = 0;
+  refalrts::Iter content_e = 0;
+  refalrts::Iter func_ptr = refalrts::call_left(content_b, content_e, arg_begin, arg_end);
+
+  const float frameTime = GetFrameTime();
+  const refalrts::RefalNumber frameTimeN = static_cast<refalrts::RefalNumber>(frameTime * 1000);
+  refalrts::reinit_number(arg_begin, frameTimeN);
+
+  refalrts::splice_to_freelist(vm, func_ptr, arg_end);
+  return refalrts::cSuccess;
+%%
+}
+
+
+$ENTRY SetTargetFPS {
+  s.FPS = <SetTargetFPS-Aux s.FPS>;
+}
+
+
+SetTargetFPS-Aux {
+%%
+  refalrts::Iter content_b = 0;
+  refalrts::Iter content_e = 0;
+  refalrts::Iter func_ptr = refalrts::call_left(content_b, content_e, arg_begin, arg_end);
+
+  if (refalrts::cDataNumber != content_b->tag) {
+    return refalrts::cRecognitionImpossible;
+  }
+
+  const int fps = content_b->number_info;
+  SetTargetFPS(fps);
+
+  refalrts::splice_to_freelist(vm, arg_begin, arg_end);
+  return refalrts::cSuccess;
+%%
+}
+
+
+$ENTRY IsMouseButtonPressed {
+  s.Button = <IsMouseButtonPressed-Aux s.Button>;
+}
+
+
+IsMouseButtonPressed-Aux {
+%%
+  refalrts::Iter content_b = 0;
+  refalrts::Iter content_e = 0;
+  refalrts::Iter func_ptr = refalrts::call_left(content_b, content_e, arg_begin, arg_end);
+
+  if (refalrts::cDataNumber != content_b->tag) {
+    return refalrts::cRecognitionImpossible;
+  }
+
+  const int button = content_b->number_info;
+  const int isPressed = IsMouseButtonPressed(button);
+  refalrts::reinit_number(arg_begin, isPressed);
+
+  refalrts::splice_to_freelist(vm, func_ptr, arg_end);
+  return refalrts::cSuccess;
+%%
+}
+
+
+$ENTRY GetMousePosition {
+%%
+  refalrts::Iter content_b = 0;
+  refalrts::Iter content_e = 0;
+  refalrts::Iter func_ptr = refalrts::call_left(content_b, content_e, arg_begin, arg_end);
+
+  const Vector2 mousePos = GetMousePosition();
+  const refalrts::RefalNumber x = static_cast<refalrts::RefalNumber>(mousePos.x);
+  const refalrts::RefalNumber y = static_cast<refalrts::RefalNumber>(mousePos.y);
+
+  refalrts::reinit_number(arg_begin, x);
+  refalrts::reinit_number(arg_begin->next, y);
+
+  refalrts::splice_to_freelist(vm, func_ptr->next, arg_end);
+  return refalrts::cSuccess;
+%%
+}
+
+
+$ENTRY GetRandomValue {
+  s.Min s.Max = <GetRandomValue-Aux s.Min s.Max>;
+}
+
+
+GetRandomValue-Aux {
+%%
+  refalrts::Iter content_b = 0;
+  refalrts::Iter content_e = 0;
+  refalrts::Iter func_ptr = refalrts::call_left(content_b, content_e, arg_begin, arg_end);
+
+  if (refalrts::cDataNumber != content_b->tag || refalrts::cDataNumber != content_b->next->tag) {
+    return refalrts::cRecognitionImpossible;
+  }
+
+  const int min = content_b->number_info;
+  const int max = content_b->next->number_info;
+  const int randomValue = GetRandomValue(min, max);
+  refalrts::reinit_number(arg_begin, randomValue);
+
+  refalrts::splice_to_freelist(vm, func_ptr, arg_end);
+  return refalrts::cSuccess;
+%%
+}
+
+
+$ENTRY SetConfigFlags {
+  s.Flags = <SetConfigFlags-Aux s.Flags>;
+}
+
+
+SetConfigFlags-Aux {
+%%
+  refalrts::Iter content_b = 0;
+  refalrts::Iter content_e = 0;
+  refalrts::Iter func_ptr = refalrts::call_left(content_b, content_e, arg_begin, arg_end);
+
+  if (refalrts::cDataNumber != content_b->tag) {
+    return refalrts::cRecognitionImpossible;
+  }
+
+  const unsigned int flags = content_b->number_info;
+  SetConfigFlags(flags);
+
+  refalrts::splice_to_freelist(vm, arg_begin, arg_end);
+  return refalrts::cSuccess;
+%%
+}

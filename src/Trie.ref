@@ -1,0 +1,97 @@
+/*
+Naming conventions:
+Rxx - related to the root of the trie
+Sxx - related to the child of the root (S - stands for "sub")
+xx - related to the new node (which we currently inserting/looking for)
+
+Eow - end of word
+*/
+
+*$FROM LibraryEx
+$EXTERN Map, Reduce, Apply, UnBracket;
+
+
+$EENUM Trie;
+
+
+/* Type constructor for the polymorphic trie.
+
+To not pass a compare function everywhere, we adopt Zig approach and define type constructor to create a trie type with associated compare function.
+*/
+$ENTRY TrieType-Init {
+  t.Cmp
+    = [Trie Root /* empty */] : t.Empty
+    = <Trie-Insert t.Cmp> : t.Insert
+    = <Trie-Build t.Cmp t.Insert t.Empty> : t.Build
+    = (Empty t.Empty)
+      (Build t.Build)
+      (Insert t.Insert)
+      (Show &Trie-Show);
+}
+
+
+Trie-Insert {
+  t.Cmp = {
+    [Trie t.RChar e.RChildren [Trie Eow]]
+    /* empty */
+      = [Trie t.RChar e.RChildren [Trie Eow]];
+
+    [Trie t.RChar e.RChildren]
+    /* empty */
+      = [Trie t.RChar e.RChildren [Trie Eow]];
+
+    [Trie t.RChar e.RChildrenB [Trie t.Char e.SChildren] e.RChildrenE]
+    t.Char e.Rest
+      = <<Trie-Insert t.Cmp> [Trie t.Char e.SChildren] e.Rest> : t.NewChild
+      = [Trie t.RChar e.RChildrenB t.NewChild e.RChildrenE];
+
+    [Trie t.RChar e.RChildren]
+    t.Char e.Rest
+      = <<Trie-Insert t.Cmp> [Trie t.Char /* empty */] e.Rest> : t.NewChild
+      = <Trie-AddChildOrdered t.Cmp t.NewChild e.RChildren> : e.RChildren^
+      = [Trie t.RChar e.RChildren];
+  };
+}
+
+
+Trie-AddChildOrdered {
+  t.Cmp t.Child /* empty */ = t.Child;
+
+  t.Cmp [Trie t.Char e.Children] [Trie t.SChar e.SChildren] e.Rest
+    = <CompleteCmp t.Cmp> : t.Cmp^
+    = <Apply t.Cmp t.Char t.SChar> : {
+      '-' = [Trie t.Char e.Children] [Trie t.SChar e.SChildren] e.Rest;
+      '+' = [Trie t.SChar e.SChildren] <Trie-AddChildOrdered t.Cmp [Trie t.Char e.Children] e.Rest>;
+      '0' = <Prout 'For whatever reason two tries with the same char were compared what essentially should not happen'> <Exit 69>;
+    };
+}
+
+CompleteCmp {
+  t.Cmp = {
+    t.Obj Eow = '-';
+    Eow t.Obj = '+';
+    t.Obj Root = '+';
+    Root t.Obj = '-';
+    t.Obj t.Other = <Apply t.Cmp t.Obj t.Other>;
+  };
+}
+
+
+Trie-Build {
+  t.Cmp t.Insert t.Empty
+    = {
+      e.Words = <Reduce
+        { t.Trie (e.Word) = <t.Insert t.Trie e.Word> }
+        t.Empty
+        e.Words
+      >
+    };
+}
+
+
+Trie-Show {
+  e.Indent [Trie t.Char /* empty */ ] = e.Indent t.Char '\n';
+
+  e.Indent [Trie t.Char e.Children ]
+    = e.Indent t.Char '\n' <Map (&Trie-Show e.Indent '  ') e.Children>;
+}

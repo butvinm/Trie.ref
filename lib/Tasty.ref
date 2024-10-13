@@ -1,0 +1,42 @@
+*$FROM LibraryEx
+$EXTERN MapAccum, Apply;
+
+
+$ENTRY RunTests {
+  e.Tests = <MapAccum
+    {
+      (s.Passed s.Failed) t.Test
+        = <Apply t.Test> : {
+          Success (e.Name) e.Expected
+            = <Prout e.Name ' \x1b[32mPASS\x1b[0m'> :
+            = (<Add s.Passed 1> s.Failed);
+          Fail (e.Name) (e.Actual) e.Expected
+            = <Prout e.Name ' \x1b[31mFAILED\x1b[0m\n' e.Actual '!= ' e.Expected> :
+            = (s.Passed <Add s.Failed 1>);
+        };
+    }
+    (0 0)
+    e.Tests
+  > : {
+    (s.Passed 0)
+      = <Prout '\x1b[32m---------------- ' s.Passed 'passed' ' ----------------\x1b[0m'>;
+
+      (0 s.Failed)
+      = <Prout '\x1b[31m---------------- ' s.Failed 'failed' ' ----------------\x1b[0m'>;
+
+      (s.Passed s.Failed)
+      = <Prout '\x1b[31m---------------- ' s.Passed 'passed' ' ' s.Failed 'failed' ' ----------------\x1b[0m'>;
+      = <Exit 1>;
+  };
+}
+
+
+$ENTRY Test {
+  (e.Name) t.Func e.Expected
+    = {
+      = <Apply t.Func> : {
+        e.Expected = Success (e.Name) e.Expected;
+        e.Actual = Fail (e.Name) (e.Actual) e.Expected;
+      };
+    }
+}

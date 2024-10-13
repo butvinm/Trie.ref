@@ -1,0 +1,178 @@
+*$FROM LibraryEx
+$EXTERN Reduce;
+
+*$FROM lib/Tasty
+$EXTERN Test, RunTests;
+
+*$FROM src/Trie
+$EXTERN Trie, Trie-Create, Trie-Draw, Trie-Depth, TrieType-Init;
+
+
+$ENTRY Go {
+  = <RunTests
+    <TestInsert>
+  >;
+}
+
+
+LexCmp {
+  s.C0 s.C1 = <Compare <Ord s.C0> <Ord s.C1>>;
+}
+
+
+WordsMock {
+  =
+    ('bca') ('aa') ('bcc') ('caa') ('ab')
+    ('bcb') ('ccc') ('cab') ('b') ('cac') ('cba') ('cbb') ('cbc') ('aba')
+    ('abb') ('abc') ('aca') ('acb') ('c') ('acc') ('baa') ('bab') ('bac')
+    ('bba') ('bbb') ('bbc')  ('ac') ('aab') ('aac') ('a') ('cca') ('ccb')
+}
+
+
+TrieMock {
+  =
+  [Trie Root
+    [Trie a
+      [Trie a
+        [Trie b [Trie Eow ]]
+        [Trie c [Trie Eow ]]
+        [Trie Eow ]
+      ]
+      [Trie b
+        [Trie a [Trie Eow ]]
+        [Trie b [Trie Eow ]]
+        [Trie c [Trie Eow ]]
+        [Trie Eow ]
+      ]
+      [Trie c
+        [Trie a [Trie Eow ]]
+        [Trie b [Trie Eow ]]
+        [Trie c [Trie Eow ]]
+        [Trie Eow ]
+      ]
+      [Trie Eow ]
+    ]
+    [Trie b
+      [Trie a
+        [Trie a [Trie Eow ]]
+        [Trie b [Trie Eow ]]
+        [Trie c [Trie Eow ]]
+      ]
+      [Trie b
+        [Trie a [Trie Eow ]]
+        [Trie b [Trie Eow ]]
+        [Trie c [Trie Eow ]]
+      ]
+      [Trie c
+        [Trie a [Trie Eow ]]
+        [Trie b [Trie Eow ]]
+        [Trie c [Trie Eow ]]
+      ]
+      [Trie Eow ]
+    ]
+    [Trie c
+      [Trie a
+        [Trie a [Trie Eow ]]
+        [Trie b [Trie Eow ]]
+        [Trie c [Trie Eow ]]
+      ]
+      [Trie b
+        [Trie a [Trie Eow ]]
+        [Trie b [Trie Eow ]]
+        [Trie c [Trie Eow ]]
+      ]
+      [Trie c
+        [Trie a [Trie Eow ]]
+        [Trie b [Trie Eow ]]
+        [Trie c [Trie Eow ]]
+      ]
+      [Trie Eow ]
+    ]
+  ];
+}
+
+
+TestInsert {
+  = <TrieType-Init &LexCmp> : (Empty t.Empty) (Build t.Build) (Insert t.Insert) (Show t.Show)
+  =
+    <Test
+      ('Inserting a word into an empty trie')
+      {
+        = <t.Insert t.Empty 'hello'>;
+      }
+      [Trie Root
+        [Trie 'h'
+          [Trie 'e'
+            [Trie 'l'
+              [Trie 'l'
+                [Trie 'o' [Trie Eow]]
+              ]
+            ]
+          ]
+        ]
+      ]
+    >
+    <Test
+      ('Inserting a word into a trie with a different word')
+      {
+        = <t.Insert <t.Insert t.Empty 'hello'> 'world'>;
+      }
+      [Trie Root
+        [Trie 'h'
+          [Trie 'e'
+            [Trie 'l'
+              [Trie 'l'
+                [Trie 'o' [Trie Eow]]
+              ]
+            ]
+          ]
+        ]
+        [Trie 'w'
+          [Trie 'o'
+            [Trie 'r'
+              [Trie 'l'
+                [Trie 'd' [Trie Eow]]
+              ]
+            ]
+          ]
+        ]
+      ]
+    >
+    <Test
+      ('Insert an empty word')
+      {
+        = <t.Insert t.Empty ''>;
+      }
+      [Trie Root [Trie Eow]]
+    >
+    <Test
+      ('Insert a word that is a prefix of another word')
+      {
+        = <t.Insert <t.Insert t.Empty 'hello'> 'hell'>;
+      }
+      [Trie Root
+        [Trie 'h'
+          [Trie 'e'
+            [Trie 'l'
+              [Trie 'l'
+                [Trie 'o' [Trie Eow]]
+                [Trie Eow]
+              ]
+            ]
+          ]
+        ]
+      ]
+    >
+    <Test
+      ('Inserts must preserve alphabetical order')
+      {
+        = <t.Insert <t.Insert <t.Insert <t.Insert t.Empty ''> 'b'> 'c'> 'a'>;
+      }
+      [Trie Root
+        [Trie 'a' [Trie Eow]]
+        [Trie 'b' [Trie Eow]]
+        [Trie 'c' [Trie Eow]]
+        [Trie Eow]
+      ]
+    >
+}
