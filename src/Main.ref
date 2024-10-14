@@ -2,7 +2,7 @@
 $EXTERN Reduce;
 
 *$FROM src/Trie
-$EXTERN Trie, TrieType-Init;
+$EXTERN TrieType, Trie, TrieType-Init;
 
 
 *$FROM lib/Raylib
@@ -20,15 +20,19 @@ $EXTERN
 
 
 $ENTRY Go {
-  = <TrieType-Init &LexCmp> : (Empty t.Empty) (Build t.Build) (Insert t.Insert) e._ 
-  /* = <t.Build ('ansible') ('angular') ('apache') ('api') ('aws') ('azure') ('xml') ('xamarin') ('xcode')> : t.Trie */
+  = <TrieType-Init &LexCmp> : [TrieType
+    (Empty t.Empty)
+    (Build t.Build)
+    (Insert t.Insert)
+    (Delete t.Delete)
+    (Show t.Show)
+  ]
   = <t.Build
     ('bca') ('aa') ('bcc') ('caa') ('ab')
     ('bcb') ('ccc') ('cab') ('b') ('cac') ('cba') ('cbb') ('cbc') ('aba')
     ('abb') ('abc') ('aca') ('acb') ('c') ('acc') ('baa') ('bab') ('bac')
     ('bba') ('bbb') ('bbc')  ('ac') ('aab') ('aac') ('a') ('cca') ('ccb')
   > : t.Trie
-  /* = <Prout t.Trie>; */
   = <Main t.Trie>;
 }
 
@@ -41,7 +45,7 @@ LexCmp {
 Main {
   t.Trie
     = <SetConfigFlags 4> : /* FLAG_WINDOW_RESIZABLE */
-    = <InitWindow 800 600 'Hello, world!'> :
+    = <InitWindow 1800 600 'Hello, world!'> :
     = <SetTargetFPS 60> :
     = <Loop t.Trie>;
 }
@@ -51,7 +55,7 @@ Loop {
   t.Trie
     = <BeginDrawing> :
     = <ClearBackground (24 24 24 255)> :
-    = <Trie-Draw 50 50 1000 t.Trie> :
+    = <Trie-Draw 50 50 600 t.Trie> :
     = <EndDrawing> :
     = <WindowShouldClose> : {
       1 = <CloseWindow>;
@@ -79,7 +83,7 @@ Trie-Draw {
         s.OffsetX t.Child
           = <Add s.X s.OffsetX> : s.ChildX
           = <Add s.Y <Mul <FONT_SIZE> 4>> : s.ChildY
-          = <Trie-Draw s.ChildX s.ChildY <Div s.OffsetXD 5> t.Child> :
+          = <Trie-Draw s.ChildX s.ChildY <Div s.OffsetXD 4> t.Child> :
           = <DrawLine
             <Add s.X 10>
             <Add s.Y <FONT_SIZE>>

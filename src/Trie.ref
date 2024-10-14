@@ -27,6 +27,7 @@ $ENTRY TrieType-Init {
       (Build <BuildImpl e.Self>)
       (Insert <InsertImpl e.Self>)
       (Delete <DeleteImpl e.Self>)
+      (Lookup <LookupImpl e.Self>)
       (Show <ShowImpl e.Self>)
     ];
 }
@@ -122,5 +123,20 @@ DeleteImpl {
 
     t.Trie e.Word
       = Fail 'Word "' e.Word '" not found in the trie';
+  };
+}
+
+
+LookupImpl {
+  e.Self = {
+    [Trie t.RChar e.RChildren [Trie Eow]]
+    /* empty */
+      = True;
+
+    [Trie t.RChar e.RChildrenB [Trie t.Char e.SChildren] e.RChildrenE]
+    t.Char e.Rest
+      = <<LookupImpl e.Self> [Trie t.Char e.SChildren] e.Rest>;
+
+    t.Trie e.Word = False;
   };
 }

@@ -13,6 +13,7 @@ $ENTRY Go {
     <TestInsert>
     <TestBuild>
     <TestDelete>
+    <TestLookup>
   >;
 }
 
@@ -100,6 +101,7 @@ TestInsert {
     (Build t.Build)
     (Insert t.Insert)
     (Delete t.Delete)
+    (Lookup t.Lookup)
     (Show t.Show)
   ]
   =
@@ -192,6 +194,7 @@ TestBuild {
     (Build t.Build)
     (Insert t.Insert)
     (Delete t.Delete)
+    (Lookup t.Lookup)
     (Show t.Show)
   ]
   =
@@ -218,6 +221,7 @@ TestDelete {
     (Build t.Build)
     (Insert t.Insert)
     (Delete t.Delete)
+    (Lookup t.Lookup)
     (Show t.Show)
   ]
   =
@@ -275,5 +279,60 @@ TestDelete {
           ]
         ]
       ]
+    >
+}
+
+
+TestLookup {
+  = <TrieType-Init &LexCmp> : [TrieType
+    (Empty t.Empty)
+    (Build t.Build)
+    (Insert t.Insert)
+    (Delete t.Delete)
+    (Lookup t.Lookup)
+    (Show t.Show)
+  ]
+  =
+    <Test
+      ('Looking up a word in an empty trie')
+      {
+        = <t.Lookup t.Empty 'hello'>;
+      }
+      False
+    >
+    <Test
+      ('Looking up a word in a trie with a different word')
+      {
+        = <t.Lookup <t.Insert t.Empty 'hello'> 'world'>;
+      }
+      False
+    >
+    <Test
+      ('Looking up a word in a trie with the single word')
+      {
+        = <t.Lookup <t.Insert t.Empty 'hello'> 'hello'>;
+      }
+      True
+    >
+    <Test
+      ('Looking up a word in a trie with multiple words')
+      {
+        = <t.Lookup <t.Insert <t.Insert t.Empty 'hello'> 'world'> 'hello'>;
+      }
+      True
+    >
+    <Test
+      ('Looking up a word that is a prefix of another word')
+      {
+        = <t.Lookup <t.Insert <t.Insert t.Empty 'hello'> 'hell'> 'hell'>;
+      }
+      True
+    >
+    <Test
+      ('Looking up a prefix of a word')
+      {
+        = <t.Lookup <t.Insert t.Empty 'hello'> 'hell'>;
+      }
+      False
     >
 }
