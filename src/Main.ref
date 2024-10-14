@@ -20,7 +20,7 @@ $EXTERN
 
 
 $ENTRY Go {
-  = <TrieType-Init &LexCmp> : (Empty t.Empty) (Build t.Build) (Insert t.Insert) (Show t.Show)
+  = <TrieType-Init &LexCmp> : (Empty t.Empty) (Build t.Build) (Insert t.Insert) e._ 
   /* = <t.Build ('ansible') ('angular') ('apache') ('api') ('aws') ('azure') ('xml') ('xamarin') ('xcode')> : t.Trie */
   = <t.Build
     ('bca') ('aa') ('bcc') ('caa') ('ab')
@@ -28,8 +28,8 @@ $ENTRY Go {
     ('abb') ('abc') ('aca') ('acb') ('c') ('acc') ('baa') ('bab') ('bac')
     ('bba') ('bbb') ('bbc')  ('ac') ('aab') ('aac') ('a') ('cca') ('ccb')
   > : t.Trie
-  = <Prout t.Trie>;
-  /* = <Main t.Trie>; */
+  /* = <Prout t.Trie>; */
+  = <Main t.Trie>;
 }
 
 
