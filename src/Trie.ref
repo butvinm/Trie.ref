@@ -11,6 +11,7 @@ Eow - end of word
 $EXTERN Map, Reduce, Apply, UnBracket;
 
 
+$EENUM TrieType;
 $EENUM Trie;
 
 
@@ -20,18 +21,23 @@ To not pass a compare function everywhere, we adopt Zig approach and define type
 */
 $ENTRY TrieType-Init {
   t.Cmp
-    = [Trie Root /* empty */] : t.Empty
-    = <Trie-Insert t.Cmp> : t.Insert
-    = <Trie-Build t.Cmp t.Insert t.Empty> : t.Build
-    = (Empty t.Empty)
-      (Build t.Build)
-      (Insert t.Insert)
-      (Delete &Trie-Delete)
-      (Show &Trie-Show);
+    = t.Cmp : e.Self
+    = [TrieType
+      (Empty <EmptyImpl e.Self>)
+      (Build <BuildImpl e.Self>)
+      (Insert <InsertImpl e.Self>)
+      (Delete <DeleteImpl e.Self>)
+      (Show <ShowImpl e.Self>)
+    ];
 }
 
 
-Trie-Insert {
+EmptyImpl {
+  e.Self = [Trie Root /* empty */];
+}
+
+
+InsertImpl {
   t.Cmp = {
     [Trie t.RChar e.RChildren [Trie Eow]]
     /* empty */
@@ -43,29 +49,30 @@ Trie-Insert {
 
     [Trie t.RChar e.RChildrenB [Trie t.Char e.SChildren] e.RChildrenE]
     t.Char e.Rest
-      = <<Trie-Insert t.Cmp> [Trie t.Char e.SChildren] e.Rest> : t.NewChild
+      = <<InsertImpl t.Cmp> [Trie t.Char e.SChildren] e.Rest> : t.NewChild
       = [Trie t.RChar e.RChildrenB t.NewChild e.RChildrenE];
 
     [Trie t.RChar e.RChildren]
     t.Char e.Rest
-      = <<Trie-Insert t.Cmp> [Trie t.Char /* empty */] e.Rest> : t.NewChild
-      = <Trie-AddChildOrdered t.Cmp t.NewChild e.RChildren> : e.RChildren^
+      = <<InsertImpl t.Cmp> [Trie t.Char /* empty */] e.Rest> : t.NewChild
+      = <AddChildOrdered t.Cmp t.NewChild e.RChildren> : e.RChildren^
       = [Trie t.RChar e.RChildren];
   };
 }
 
 
-Trie-AddChildOrdered {
+AddChildOrdered {
   t.Cmp t.Child /* empty */ = t.Child;
 
   t.Cmp [Trie t.Char e.Children] [Trie t.SChar e.SChildren] e.Rest
     = <CompleteCmp t.Cmp> : t.Cmp^
     = <Apply t.Cmp t.Char t.SChar> : {
       '-' = [Trie t.Char e.Children] [Trie t.SChar e.SChildren] e.Rest;
-      '+' = [Trie t.SChar e.SChildren] <Trie-AddChildOrdered t.Cmp [Trie t.Char e.Children] e.Rest>;
+      '+' = [Trie t.SChar e.SChildren] <AddChildOrdered t.Cmp [Trie t.Char e.Children] e.Rest>;
       '0' = <Prout 'For whatever reason two tries with the same char were compared what essentially should not happen'> <Exit 69>;
     };
 }
+
 
 CompleteCmp {
   t.Cmp = {
@@ -78,39 +85,42 @@ CompleteCmp {
 }
 
 
-Trie-Build {
-  t.Cmp t.Insert t.Empty
-    = {
-      e.Words = <Reduce
-        { t.Trie (e.Word) = <t.Insert t.Trie e.Word> }
-        t.Empty
-        e.Words
-      >
-    };
+BuildImpl {
+  e.Self = {
+    e.Words = <Reduce
+      { t.Trie (e.Word) = <<InsertImpl e.Self> t.Trie e.Word> }
+      [Trie Root /* empty */]
+      e.Words
+    >
+  };
 }
 
 
-Trie-Show {
-  e.Indent [Trie t.Char /* empty */ ] = e.Indent t.Char '\n';
+ShowImpl {
+  e.Self = {
+    e.Indent [Trie t.Char /* empty */ ] = e.Indent t.Char '\n';
 
-  e.Indent [Trie t.Char e.Children ]
-    = e.Indent t.Char '\n' <Map (&Trie-Show e.Indent '  ') e.Children>;
+    e.Indent [Trie t.Char e.Children ]
+      = e.Indent t.Char '\n' <Map (&ShowImpl e.Indent '  ') e.Children>;
+  };
 }
 
 
-Trie-Delete {
-  [Trie t.RChar e.RChildren [Trie Eow]]
-  /* empty */
-    = Success [Trie t.RChar e.RChildren];
+DeleteImpl {
+  e.Self = {
+    [Trie t.RChar e.RChildren [Trie Eow]]
+    /* empty */
+      = Success [Trie t.RChar e.RChildren];
 
-  [Trie t.RChar e.RChildrenB [Trie t.Char e.SChildren] e.RChildrenE]
-  t.Char e.Rest
-    = <Trie-Delete [Trie t.Char e.SChildren] e.Rest> : {
-      Success [Trie t.Char /* empty */] = Success [Trie t.RChar e.RChildrenB e.RChildrenE];
-      Success t.Child = Success [Trie t.RChar e.RChildrenB t.Child e.RChildrenE];
-      Fail e.Error = Fail e.Error;
-    };
+    [Trie t.RChar e.RChildrenB [Trie t.Char e.SChildren] e.RChildrenE]
+    t.Char e.Rest
+      = <<DeleteImpl e.Self> [Trie t.Char e.SChildren] e.Rest> : {
+        Success [Trie t.Char /* empty */] = Success [Trie t.RChar e.RChildrenB e.RChildrenE];
+        Success t.Child = Success [Trie t.RChar e.RChildrenB t.Child e.RChildrenE];
+        Fail e.Error = Fail e.Error;
+      };
 
-  t.Trie e.Word
-    = Fail 'Word "' e.Word '" not found in the trie';
+    t.Trie e.Word
+      = Fail 'Word "' e.Word '" not found in the trie';
+  };
 }

@@ -5,7 +5,7 @@ $EXTERN Reduce;
 $EXTERN Test, RunTests;
 
 *$FROM src/Trie
-$EXTERN Trie, Trie-Create, Trie-Draw, Trie-Depth, TrieType-Init;
+$EXTERN TrieType, Trie, Trie-Create, Trie-Draw, Trie-Depth, TrieType-Init;
 
 
 $ENTRY Go {
@@ -95,7 +95,13 @@ TrieMock {
 
 
 TestInsert {
-  = <TrieType-Init &LexCmp> : (Empty t.Empty) e._ (Insert t.Insert) e._
+  = <TrieType-Init &LexCmp> : [TrieType
+    (Empty t.Empty)
+    (Build t.Build)
+    (Insert t.Insert)
+    (Delete t.Delete)
+    (Show t.Show)
+  ]
   =
     <Test
       ('Inserting a word into an empty trie')
@@ -181,7 +187,13 @@ TestInsert {
 
 
 TestBuild {
-  = <TrieType-Init &LexCmp> : (Empty t.Empty) (Build t.Build) (Insert t.Insert)  e._
+  = <TrieType-Init &LexCmp> : [TrieType
+    (Empty t.Empty)
+    (Build t.Build)
+    (Insert t.Insert)
+    (Delete t.Delete)
+    (Show t.Show)
+  ]
   =
     <Test
       ('Building a trie from an empty list')
@@ -201,7 +213,13 @@ TestBuild {
 
 
 TestDelete {
-  = <TrieType-Init &LexCmp> : (Empty t.Empty) e._ (Insert t.Insert) (Delete t.Delete) e._
+  = <TrieType-Init &LexCmp> : [TrieType
+    (Empty t.Empty)
+    (Build t.Build)
+    (Insert t.Insert)
+    (Delete t.Delete)
+    (Show t.Show)
+  ]
   =
     <Test
       ('Deleting a word from an empty trie')
