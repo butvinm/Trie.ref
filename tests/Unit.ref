@@ -11,6 +11,8 @@ $EXTERN Trie, Trie-Create, Trie-Draw, Trie-Depth, TrieType-Init;
 $ENTRY Go {
   = <RunTests
     <TestInsert>
+    <TestBuild>
+    <TestDelete>
   >;
 }
 
@@ -32,59 +34,59 @@ WordsMock {
 TrieMock {
   =
   [Trie Root
-    [Trie a
-      [Trie a
-        [Trie b [Trie Eow ]]
-        [Trie c [Trie Eow ]]
+    [Trie 'a'
+      [Trie 'a'
+        [Trie 'b' [Trie Eow ]]
+        [Trie 'c' [Trie Eow ]]
         [Trie Eow ]
       ]
-      [Trie b
-        [Trie a [Trie Eow ]]
-        [Trie b [Trie Eow ]]
-        [Trie c [Trie Eow ]]
+      [Trie 'b'
+        [Trie 'a' [Trie Eow ]]
+        [Trie 'b' [Trie Eow ]]
+        [Trie 'c' [Trie Eow ]]
         [Trie Eow ]
       ]
-      [Trie c
-        [Trie a [Trie Eow ]]
-        [Trie b [Trie Eow ]]
-        [Trie c [Trie Eow ]]
+      [Trie 'c'
+        [Trie 'a' [Trie Eow ]]
+        [Trie 'b' [Trie Eow ]]
+        [Trie 'c' [Trie Eow ]]
         [Trie Eow ]
       ]
       [Trie Eow ]
     ]
-    [Trie b
-      [Trie a
-        [Trie a [Trie Eow ]]
-        [Trie b [Trie Eow ]]
-        [Trie c [Trie Eow ]]
+    [Trie 'b'
+      [Trie 'a'
+        [Trie 'a' [Trie Eow ]]
+        [Trie 'b' [Trie Eow ]]
+        [Trie 'c' [Trie Eow ]]
       ]
-      [Trie b
-        [Trie a [Trie Eow ]]
-        [Trie b [Trie Eow ]]
-        [Trie c [Trie Eow ]]
+      [Trie 'b'
+        [Trie 'a' [Trie Eow ]]
+        [Trie 'b' [Trie Eow ]]
+        [Trie 'c' [Trie Eow ]]
       ]
-      [Trie c
-        [Trie a [Trie Eow ]]
-        [Trie b [Trie Eow ]]
-        [Trie c [Trie Eow ]]
+      [Trie 'c'
+        [Trie 'a' [Trie Eow ]]
+        [Trie 'b' [Trie Eow ]]
+        [Trie 'c' [Trie Eow ]]
       ]
       [Trie Eow ]
     ]
-    [Trie c
-      [Trie a
-        [Trie a [Trie Eow ]]
-        [Trie b [Trie Eow ]]
-        [Trie c [Trie Eow ]]
+    [Trie 'c'
+      [Trie 'a'
+        [Trie 'a' [Trie Eow ]]
+        [Trie 'b' [Trie Eow ]]
+        [Trie 'c' [Trie Eow ]]
       ]
-      [Trie b
-        [Trie a [Trie Eow ]]
-        [Trie b [Trie Eow ]]
-        [Trie c [Trie Eow ]]
+      [Trie 'b'
+        [Trie 'a' [Trie Eow ]]
+        [Trie 'b' [Trie Eow ]]
+        [Trie 'c' [Trie Eow ]]
       ]
-      [Trie c
-        [Trie a [Trie Eow ]]
-        [Trie b [Trie Eow ]]
-        [Trie c [Trie Eow ]]
+      [Trie 'c'
+        [Trie 'a' [Trie Eow ]]
+        [Trie 'b' [Trie Eow ]]
+        [Trie 'c' [Trie Eow ]]
       ]
       [Trie Eow ]
     ]
@@ -93,7 +95,7 @@ TrieMock {
 
 
 TestInsert {
-  = <TrieType-Init &LexCmp> : (Empty t.Empty) (Build t.Build) (Insert t.Insert) (Show t.Show)
+  = <TrieType-Init &LexCmp> : (Empty t.Empty) e._ (Insert t.Insert) e._
   =
     <Test
       ('Inserting a word into an empty trie')
@@ -173,6 +175,87 @@ TestInsert {
         [Trie 'b' [Trie Eow]]
         [Trie 'c' [Trie Eow]]
         [Trie Eow]
+      ]
+    >
+}
+
+
+TestBuild {
+  = <TrieType-Init &LexCmp> : (Empty t.Empty) (Build t.Build) (Insert t.Insert)  e._
+  =
+    <Test
+      ('Building a trie from an empty list')
+      {
+        = <t.Build /* empty */>;
+      }
+      t.Empty
+    >
+    <Test
+      ('Building a trie from a list of words')
+      {
+        = <t.Build <WordsMock>>;
+      }
+      <TrieMock>
+    >
+}
+
+
+TestDelete {
+  = <TrieType-Init &LexCmp> : (Empty t.Empty) e._ (Insert t.Insert) (Delete t.Delete) e._
+  =
+    <Test
+      ('Deleting a word from an empty trie')
+      {
+        = <t.Delete t.Empty 'hello'>;
+      }
+      Fail 'Word "hello" not found in the trie'
+    >
+    <Test
+      ('Deleting a word from a trie with a different word')
+      {
+        = <t.Delete <t.Insert t.Empty 'hello'> 'world'>;
+      }
+      Fail 'Word "world" not found in the trie'
+    >
+    <Test
+      ('Deleting a word from a trie with the single word')
+      {
+        = <t.Delete <t.Insert t.Empty 'hello'> 'hello'>;
+      }
+      Success t.Empty
+    >
+    <Test
+      ('Deleting a word from a trie with multiple words')
+      {
+        = <t.Delete <t.Insert <t.Insert t.Empty 'hello'> 'world'> 'hello'>;
+      }
+      Success [Trie Root
+        [Trie 'w'
+          [Trie 'o'
+            [Trie 'r'
+              [Trie 'l'
+                [Trie 'd' [Trie Eow]]
+              ]
+            ]
+          ]
+        ]
+      ]
+    >
+    <Test
+      ('Deleting a word that is a prefix of another word')
+      {
+        = <t.Delete <t.Insert <t.Insert t.Empty 'hello'> 'hell'> 'hell'>;
+      }
+      Success [Trie Root
+        [Trie 'h'
+          [Trie 'e'
+            [Trie 'l'
+              [Trie 'l'
+                [Trie 'o' [Trie Eow]]
+              ]
+            ]
+          ]
+        ]
       ]
     >
 }

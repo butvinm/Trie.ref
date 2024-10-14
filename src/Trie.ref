@@ -26,6 +26,7 @@ $ENTRY TrieType-Init {
     = (Empty t.Empty)
       (Build t.Build)
       (Insert t.Insert)
+      (Delete &Trie-Delete)
       (Show &Trie-Show);
 }
 
@@ -94,4 +95,22 @@ Trie-Show {
 
   e.Indent [Trie t.Char e.Children ]
     = e.Indent t.Char '\n' <Map (&Trie-Show e.Indent '  ') e.Children>;
+}
+
+
+Trie-Delete {
+  [Trie t.RChar e.RChildren [Trie Eow]]
+  /* empty */
+    = Success [Trie t.RChar e.RChildren];
+
+  [Trie t.RChar e.RChildrenB [Trie t.Char e.SChildren] e.RChildrenE]
+  t.Char e.Rest
+    = <Trie-Delete [Trie t.Char e.SChildren] e.Rest> : {
+      Success [Trie t.Char /* empty */] = Success [Trie t.RChar e.RChildrenB e.RChildrenE];
+      Success t.Child = Success [Trie t.RChar e.RChildrenB t.Child e.RChildrenE];
+      Fail e.Error = Fail e.Error;
+    };
+
+  t.Trie e.Word
+    = Fail 'Word "' e.Word '" not found in the trie';
 }
