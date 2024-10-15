@@ -21,14 +21,14 @@ To not pass a compare function everywhere, we adopt Zig approach and define type
 */
 $ENTRY TrieType-Init {
   t.Cmp
-    = t.Cmp : e.Self
+    = <CompleteCmp t.Cmp> : t.Cmp^
     = [TrieType
-      (Empty <EmptyImpl e.Self>)
-      (Build <BuildImpl e.Self>)
-      (Insert <InsertImpl e.Self>)
-      (Delete <DeleteImpl e.Self>)
-      (Lookup <LookupImpl e.Self>)
-      (Show <ShowImpl e.Self>)
+      (Empty <EmptyImpl t.Cmp>)
+      (Build <BuildImpl t.Cmp>)
+      (Insert <InsertImpl t.Cmp>)
+      (Delete <DeleteImpl t.Cmp>)
+      (Lookup <LookupImpl t.Cmp>)
+      (Show <ShowImpl t.Cmp>)
     ];
 }
 
@@ -56,22 +56,34 @@ InsertImpl {
     [Trie t.RChar e.RChildren]
     t.Char e.Rest
       = <<InsertImpl t.Cmp> [Trie t.Char /* empty */] e.Rest> : t.NewChild
-      = <AddChildOrdered t.Cmp t.NewChild e.RChildren> : e.RChildren^
-      = [Trie t.RChar e.RChildren];
+      = [Trie t.RChar <SortChildren t.Cmp t.NewChild e.RChildren>];
   };
 }
 
 
-AddChildOrdered {
-  t.Cmp t.Child /* empty */ = t.Child;
+SortChildren {
+  t.Cmp /* empty */ = /* empty */;
 
-  t.Cmp [Trie t.Char e.Children] [Trie t.SChar e.SChildren] e.Rest
-    = <CompleteCmp t.Cmp> : t.Cmp^
-    = <Apply t.Cmp t.Char t.SChar> : {
-      '-' = [Trie t.Char e.Children] [Trie t.SChar e.SChildren] e.Rest;
-      '+' = [Trie t.SChar e.SChildren] <AddChildOrdered t.Cmp [Trie t.Char e.Children] e.Rest>;
-      '0' = <Prout 'For whatever reason two tries with the same char were compared what essentially should not happen'> <Exit 69>;
-    };
+  t.Cmp t.Child = t.Child;
+
+  t.Cmp [Trie t.Char e.Children] e.Rest
+    = <Reduce
+      {
+        (e.Acc) [Trie t.SChar e.SChildren], <Apply t.Cmp t.SChar t.Char> : '-' = (e.Acc [Trie t.SChar e.SChildren]);
+        (e.Acc) t.Child = (e.Acc);
+      }
+      ()
+      e.Rest
+    > : (e.Smaller)
+    = <Reduce
+      {
+        (e.Acc) [Trie t.SChar e.SChildren], <Apply t.Cmp t.SChar t.Char> : '-' = (e.Acc);
+        (e.Acc) t.Child = (e.Acc t.Child);
+      }
+      ()
+      e.Rest
+    > : (e.Bigger)
+    = <SortChildren t.Cmp e.Smaller> [Trie t.Char e.Children] <SortChildren t.Cmp e.Bigger>;
 }
 
 
