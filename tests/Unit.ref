@@ -235,21 +235,21 @@ TestDelete {
     <Test
       ('Deleting a word from a trie with a different word')
       {
-        = <t.Delete <t.Insert t.Empty 'hello'> 'world'>;
+        = <t.Delete <t.Build ('hello')> 'world'>;
       }
       Fail 'Word "world" not found in the trie'
     >
     <Test
       ('Deleting a word from a trie with the single word')
       {
-        = <t.Delete <t.Insert t.Empty 'hello'> 'hello'>;
+        = <t.Delete <t.Build ('hello')> 'hello'>;
       }
       Success t.Empty
     >
     <Test
       ('Deleting a word from a trie with multiple words')
       {
-        = <t.Delete <t.Insert <t.Insert t.Empty 'hello'> 'world'> 'hello'>;
+        = <t.Delete <t.Build ('hello') ('world')> 'hello'>;
       }
       Success [Trie Root
         [Trie 'w'
@@ -266,7 +266,7 @@ TestDelete {
     <Test
       ('Deleting a word that is a prefix of another word')
       {
-        = <t.Delete <t.Insert <t.Insert t.Empty 'hello'> 'hell'> 'hell'>;
+        = <t.Delete <t.Build ('hello') ('hell')> 'hell'>;
       }
       Success [Trie Root
         [Trie 'h'
@@ -303,35 +303,35 @@ TestLookup {
     <Test
       ('Looking up a word in a trie with a different word')
       {
-        = <t.Lookup <t.Insert t.Empty 'hello'> 'world'>;
+        = <t.Lookup <t.Build ('hello')> 'world'>;
       }
       False
     >
     <Test
       ('Looking up a word in a trie with the single word')
       {
-        = <t.Lookup <t.Insert t.Empty 'hello'> 'hello'>;
+        = <t.Lookup <t.Build ('hello')> 'hello'>;
       }
       True
     >
     <Test
       ('Looking up a word in a trie with multiple words')
       {
-        = <t.Lookup <t.Insert <t.Insert t.Empty 'hello'> 'world'> 'hello'>;
+        = <t.Lookup <t.Build ('hello') ('world')> 'hello'>;
       }
       True
     >
     <Test
       ('Looking up a word that is a prefix of another word')
       {
-        = <t.Lookup <t.Insert <t.Insert t.Empty 'hello'> 'hell'> 'hell'>;
+        = <t.Lookup <t.Build ('hello') ('hell')> 'hell'>;
       }
       True
     >
     <Test
       ('Looking up a prefix of a word')
       {
-        = <t.Lookup <t.Insert t.Empty 'hello'> 'hell'>;
+        = <t.Lookup <t.Build ('hello')> 'hell'>;
       }
       False
     >
