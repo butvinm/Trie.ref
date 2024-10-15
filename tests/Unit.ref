@@ -215,6 +215,32 @@ TestBuild {
       }
       <TrieMock>
     >
+    <Test
+      ('Heteregenous list of words')
+      {
+        = <t.Build ('hel' 2 'lo') ('a' A B C)>;
+      }
+      [Trie Root
+        [Trie 'a'
+          [Trie A
+            [Trie B
+              [Trie C [Trie Eow]]
+            ]
+          ]
+        ]
+        [Trie 'h'
+          [Trie 'e'
+            [Trie 'l'
+              [Trie 2
+                [Trie 'l'
+                  [Trie 'o' [Trie Eow]]
+                ]
+              ]
+           ]
+          ]
+        ]
+      ]
+    >
 }
 
 
