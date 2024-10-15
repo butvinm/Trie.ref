@@ -101,6 +101,7 @@ TestInsert {
     (Empty t.Empty)
     (Build t.Build)
     (Insert t.Insert)
+    (Merge t.Merge)
     (Delete t.Delete)
     (Lookup t.Lookup)
     (Show t.Show)
@@ -194,6 +195,7 @@ TestBuild {
     (Empty t.Empty)
     (Build t.Build)
     (Insert t.Insert)
+    (Merge t.Merge)
     (Delete t.Delete)
     (Lookup t.Lookup)
     (Show t.Show)
@@ -221,6 +223,7 @@ TestDelete {
     (Empty t.Empty)
     (Build t.Build)
     (Insert t.Insert)
+    (Merge t.Merge)
     (Delete t.Delete)
     (Lookup t.Lookup)
     (Show t.Show)
@@ -289,6 +292,7 @@ TestLookup {
     (Empty t.Empty)
     (Build t.Build)
     (Insert t.Insert)
+    (Merge t.Merge)
     (Delete t.Delete)
     (Lookup t.Lookup)
     (Show t.Show)
@@ -345,19 +349,20 @@ TestMerge {
     (Empty t.Empty)
     (Build t.Build)
     (Insert t.Insert)
+    (Merge t.Merge)
     (Delete t.Delete)
     (Lookup t.Lookup)
     (Show t.Show)
   ]
   =
-    /* <Test
+    <Test
       ('Merging an empty trie with another empty trie')
       {
         = <t.Merge t.Empty t.Empty>;
       }
       t.Empty
-    > */
-    /* <Test
+    >
+    <Test
       ('Merging an empty trie with a non-empty trie')
       {
         = <t.Merge t.Empty <t.Build ('hello')>>;
@@ -388,8 +393,21 @@ TestMerge {
     <Test
       ('Associative property')
       {
-        = <t.Merge <t.Merge <t.Build ('hello')> <t.Build ('world')>> <t.Build ('!')>>;
+        = <t.Merge
+          <t.Merge <t.Build ('hello')> <t.Build ('world')>>
+          <t.Build ('!')>
+        >;
       }
-      <t.Merge <t.Build ('hello')> <t.Merge <t.Build ('world') <t.Build ('!')>>>>
-    > */
+      <t.Merge
+        <t.Build ('hello')>
+        <t.Merge <t.Build ('world')> <t.Build ('!')>>
+      >
+    >
+    <Test
+      ('Merge with itself')
+      {
+        = <t.Merge <t.Build ('hello')> <t.Build ('hello')>>;
+      }
+      <t.Build ('hello')>
+    >
 }

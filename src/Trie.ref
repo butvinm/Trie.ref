@@ -26,6 +26,7 @@ $ENTRY TrieType-Init {
       (Empty <EmptyImpl t.Cmp>)
       (Build <BuildImpl t.Cmp>)
       (Insert <InsertImpl t.Cmp>)
+      (Merge <MergeImpl t.Cmp>)
       (Delete <DeleteImpl t.Cmp>)
       (Lookup <LookupImpl t.Cmp>)
       (Show <ShowImpl t.Cmp>)
@@ -151,4 +152,37 @@ LookupImpl {
 
     t.Trie e.Word = False;
   };
+}
+
+
+MergeImpl {
+  t.Cmp = {
+    [Trie t.Char e.Children0] [Trie t.Char e.Children1]
+      = [Trie t.Char <MergeChildren t.Cmp (e.Children0) (e.Children1)>]
+  };
+}
+
+
+MergeChildren {
+  t.Cmp
+  (/* empty */)
+  (e.Children)
+    = e.Children;
+
+  t.Cmp
+  (e.Children)
+  (/* empty */)
+    = e.Children;
+
+  t.Cmp
+  (e.Children0B [Trie t.Char e.SChildren0] e.Children0E)
+  (e.Children1B [Trie t.Char e.SChildren1] e.Children1E)
+    = <<MergeImpl t.Cmp> [Trie t.Char e.SChildren0] [Trie t.Char e.SChildren1]> : t.Child
+    = <MergeChildren t.Cmp (e.Children0B e.Children0E) (e.Children1B e.Children1E)> : e.Children
+    = <SortChildren t.Cmp t.Child e.Children>;
+
+  t.Cmp
+  (e.Children0)
+  (e.Children1)
+    = <SortChildren t.Cmp e.Children0 e.Children1>;
 }

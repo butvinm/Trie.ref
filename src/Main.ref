@@ -24,7 +24,9 @@ $ENTRY Go {
     (Empty t.Empty)
     (Build t.Build)
     (Insert t.Insert)
+    (Merge t.Merge)
     (Delete t.Delete)
+    (Lookup t.Lookup)
     (Show t.Show)
   ]
   = <t.Build
