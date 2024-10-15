@@ -1,0 +1,148 @@
+/*
+Property-based tests for prefix trie implementation.
+*/
+
+*$FROM LibraryEx
+$EXTERN UnBracket, Map, Apply, Reduce;
+
+
+*$FROM lib/Tasty
+$EXTERN Test, RunTests;
+
+
+*$FROM lib/Generators
+$EXTERN Gen-Take, Gen-Iter, Gen-Map, Gen-Range;
+
+
+*$FROM src/Trie
+$EXTERN TrieType, Trie, Trie-Create, Trie-Draw, Trie-Depth, TrieType-Init;
+
+
+$ENTRY Go {
+  = <RunTests
+    <TestAssociativity>
+    <TestIdentity>
+    <TestLookup>
+  >;
+}
+
+
+LexCmp {
+  s.C0 s.C1 = <Compare <Ord s.C0> <Ord s.C1>>;
+}
+
+
+RandomInt {
+  s.Min s.Max = <Add <Mod <Random 1> <Sub s.Max s.Min>> s.Min>;
+}
+
+
+RandomWord {
+    s.Len
+      = <Gen-Map { s._ = <RandomInt 65 90> } <Gen-Range 0 s.Len>> : t.Ords
+      = <Gen-Map &Chr t.Ords> : t.Chars
+      = <Map &UnBracket <Gen-Iter t.Chars>>;
+}
+
+
+RandomWords {
+  s.Count = <Gen-Iter <Gen-Map { s._ = <RandomWord <RandomInt 0 10>> } <Gen-Range 0 s.Count>>>;
+}
+
+
+TestAssociativity {
+  = <TrieType-Init &LexCmp> : [TrieType
+    (Empty t.Empty)
+    (Build t.Build)
+    (Insert t.Insert)
+    (Merge t.Merge)
+    (Delete t.Delete)
+    (Lookup t.Lookup)
+    (Show t.Show)
+  ]
+  = <Gen-Iter
+    <Gen-Map
+      {
+        (e.W0) (e.W1) (e.W2) = <Test
+          ('Check associativity: ' (e.W0) '+ (' (e.W1) '+ ' (e.W2) ') == (' (e.W0) '+ ' (e.W1) ') + ' (e.W2))
+          {
+            = <t.Merge <t.Merge <t.Build e.W0> <t.Build e.W1>> <t.Build e.W2>>
+          }
+          <t.Merge <t.Build e.W0> <t.Merge <t.Build e.W1> <t.Build e.W2>>>
+        >
+      }
+      <Gen-Map
+        { s._ = (<RandomWords <RandomInt 0 5>>) (<RandomWords <RandomInt 0 5>>) (<RandomWords <RandomInt 0 5>>) }
+        <Gen-Range 0 1000>
+      >
+    >
+  >;
+}
+
+
+TestIdentity {
+  = <TrieType-Init &LexCmp> : [TrieType
+    (Empty t.Empty)
+    (Build t.Build)
+    (Insert t.Insert)
+    (Merge t.Merge)
+    (Delete t.Delete)
+    (Lookup t.Lookup)
+    (Show t.Show)
+  ]
+  = <Gen-Iter
+    <Gen-Map
+      {
+        e.W = <Test
+          ('Check identity: ' e.W '+ e == e + ' e.W ' == ' e.W)
+          {
+            = <t.Merge t.Empty <t.Build e.W>>
+          }
+          <t.Build e.W>
+        >
+      }
+      <Gen-Map
+        { s._ = <RandomWords <RandomInt 0 5>> }
+        <Gen-Range 0 1000>
+      >
+    >
+  >;
+}
+
+
+TestLookup {
+  = <TrieType-Init &LexCmp> : [TrieType
+    (Empty t.Empty)
+    (Build t.Build)
+    (Insert t.Insert)
+    (Merge t.Merge)
+    (Delete t.Delete)
+    (Lookup t.Lookup)
+    (Show t.Show)
+  ]
+  = <Gen-Iter
+    <Gen-Map
+      {
+        e.W = <Test
+          ('Check lookup: ' e.W ' in ' e.W)
+          {
+            = <t.Build e.W> : t.Trie
+            = <Reduce
+              {
+                s.T (e.Word), <t.Lookup t.Trie e.Word> : True = s.T;
+                s.T = False;
+              }
+              True
+              e.W
+            >;
+          }
+          True
+        >
+      }
+      <Gen-Map
+        { s._ = <RandomWords <RandomInt 0 5>> }
+        <Gen-Range 0 1000>
+      >
+    >
+  >;
+}
