@@ -1,5 +1,5 @@
 *$FROM LibraryEx
-$EXTERN Reduce;
+$EXTERN Map, Reduce;
 
 *$FROM lib/Tasty
 $EXTERN Test, RunTests;
@@ -15,6 +15,7 @@ $ENTRY Go {
     <TestDelete>
     <TestLookup>
     <TestMerge>
+    <TestMap>
   >;
 }
 
@@ -105,6 +106,7 @@ TestInsert {
     (Delete t.Delete)
     (Lookup t.Lookup)
     (Show t.Show)
+    (Map t.Map)
   ]
   =
     <Test
@@ -199,6 +201,7 @@ TestBuild {
     (Delete t.Delete)
     (Lookup t.Lookup)
     (Show t.Show)
+    (Map t.Map)
   ]
   =
     <Test
@@ -253,6 +256,7 @@ TestDelete {
     (Delete t.Delete)
     (Lookup t.Lookup)
     (Show t.Show)
+    (Map t.Map)
   ]
   =
     <Test
@@ -322,6 +326,7 @@ TestLookup {
     (Delete t.Delete)
     (Lookup t.Lookup)
     (Show t.Show)
+    (Map t.Map)
   ]
   =
     <Test
@@ -379,6 +384,7 @@ TestMerge {
     (Delete t.Delete)
     (Lookup t.Lookup)
     (Show t.Show)
+    (Map t.Map)
   ]
   =
     <Test
@@ -435,5 +441,58 @@ TestMerge {
         = <t.Merge <t.Build ('hello')> <t.Build ('hello')>>;
       }
       <t.Build ('hello')>
+    >
+}
+
+
+ReplaceB {
+  e.Word = <Map { 'a' = 'b'; 'b' = 'a'; s.C = s.C } e.Word>;
+}
+
+
+TestMap {
+  = <TrieType-Init &LexCmp> : [TrieType
+    (Empty t.Empty)
+    (Build t.Build)
+    (Insert t.Insert)
+    (Merge t.Merge)
+    (Delete t.Delete)
+    (Lookup t.Lookup)
+    (Show t.Show)
+    (Map t.Map)
+  ]
+  =
+    <Test
+      ('Mapping an empty trie')
+      {
+        = <t.Map { t.C = t.C } t.Empty>;
+      }
+      t.Empty
+    >
+    <Test
+      ('Mapping a trie with some words')
+      {
+        = <t.Map &ReplaceB <t.Build ('abc') ('acb') ('bcc') ('cbb')>>;
+      }
+      [Trie Root
+        [Trie 'a'
+          [Trie 'c'
+            [Trie 'c' [Trie Eow]]
+          ]
+        ]
+        [Trie 'b'
+          [Trie 'a'
+            [Trie 'c' [Trie Eow]]
+          ]
+          [Trie 'c'
+            [Trie 'a' [Trie Eow]]
+          ]
+        ]
+        [Trie 'c'
+          [Trie 'a'
+            [Trie 'a' [Trie Eow]]
+          ]
+        ]
+      ]
     >
 }

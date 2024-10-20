@@ -30,6 +30,7 @@ $ENTRY TrieType-Init {
       (Delete <DeleteImpl t.Cmp>)
       (Lookup <LookupImpl t.Cmp>)
       (Show <ShowImpl t.Cmp>)
+      (Map <MapImpl t.Cmp>)
     ];
 }
 
@@ -185,4 +186,14 @@ MergeChildren {
   (e.Children0)
   (e.Children1)
     = <SortChildren t.Cmp e.Children0 e.Children1>;
+}
+
+
+MapImpl {
+  t.Cmp = {
+    t.Fn [Trie t.Char e.Children]
+      = <Map { [Trie t.SChar e.SChildren] = [Trie <Apply t.Fn t.SChar> e.SChildren] } e.Children> : e.Children^
+      = <Map { t.Child = <<MapImpl t.Cmp> t.Fn t.Child> } e.Children> : e.Children^
+      = [Trie t.Char <SortChildren t.Cmp e.Children>];
+  };
 }
