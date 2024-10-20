@@ -11,7 +11,7 @@ $EXTERN Test, RunTests;
 
 
 *$FROM lib/Generators
-$EXTERN Gen-Take, Gen-Iter, Gen-Map, Gen-Range;
+$EXTERN Gen-Take, Gen-Iter, Gen-FlatIter, Gen-Map, Gen-Range;
 
 
 *$FROM src/Trie
@@ -59,8 +59,9 @@ TestAssociativity {
     (Delete t.Delete)
     (Lookup t.Lookup)
     (Show t.Show)
+    (Map t.Map)
   ]
-  = <Gen-Iter
+  = <Gen-FlatIter
     <Gen-Map
       {
         (e.W0) (e.W1) (e.W2) = <Test
@@ -89,17 +90,26 @@ TestIdentity {
     (Delete t.Delete)
     (Lookup t.Lookup)
     (Show t.Show)
+    (Map t.Map)
   ]
-  = <Gen-Iter
+  = <Gen-FlatIter
     <Gen-Map
       {
-        e.W = <Test
-          ('Check identity: ' e.W '+ e == e + ' e.W ' == ' e.W)
-          {
-            = <t.Merge t.Empty <t.Build e.W>>
-          }
-          <t.Build e.W>
-        >
+        e.W =
+          <Test
+            ('Check identity: ' e.W '+ e == e + ' e.W ' == ' e.W)
+            {
+              = <t.Merge t.Empty <t.Build e.W>>
+            }
+            <t.Build e.W>
+          >
+          <Test
+            ('Check identity: ' e.W '+ e == e + ' e.W ' == ' e.W)
+            {
+              = <t.Merge <t.Build e.W> t.Empty>
+            }
+            <t.Build e.W>
+          >
       }
       <Gen-Map
         { s._ = <RandomWords <RandomInt 0 5>> }
@@ -110,6 +120,7 @@ TestIdentity {
 }
 
 
+/* Property: Any inserted word must be found in the trie. */
 TestLookup {
   = <TrieType-Init &LexCmp> : [TrieType
     (Empty t.Empty)
@@ -119,8 +130,9 @@ TestLookup {
     (Delete t.Delete)
     (Lookup t.Lookup)
     (Show t.Show)
+    (Map t.Map)
   ]
-  = <Gen-Iter
+  = <Gen-FlatIter
     <Gen-Map
       {
         e.W = <Test
